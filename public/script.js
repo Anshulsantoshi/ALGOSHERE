@@ -51,6 +51,14 @@ document.getElementById('events-link').addEventListener('click', () => {
   showSection('events-section');
 });
 
+document.getElementById('artists-link').addEventListener('click', () => {
+  showSection('artists-section');
+});
+
+document.getElementById('tracks-link').addEventListener('click', () => {
+  showSection('tracks-section');
+});
+
 document.getElementById('tickets-link').addEventListener('click', () => {
   showSection('tickets-section');
 });
@@ -112,18 +120,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (err) {
           console.error('Error saving user data:', err);
       }
-  };
+    };
   
-  // Call this function after fetching user data from Spotify
-  const spotify_id = 'user_spotify_id'; // Replace with actual Spotify ID
-  const email = 'user_email'; // Replace with actual email
-  const top_artists = [/* Array of top artists */];
-  const top_tracks = [/* Array of top tracks */];
+    // Call this function after fetching user data from Spotify
+    const spotify_id = 'user_spotify_id'; // Replace with actual Spotify ID
+    const email = 'user_email'; // Replace with actual email
+    const top_artists = [/* Array of top artists */];
+    const top_tracks = [/* Array of top tracks */];
   
-  saveUserData(spotify_id, email, top_artists, top_tracks);
+    saveUserData(spotify_id, email, top_artists, top_tracks);
     
   
-  // Fetch Top Tracks
+    // Fetch Top Tracks
     const trackRes = await fetch("/api/spotify/top-tracks", { credentials: "include" });
     const trackData = await trackRes.json();
 
@@ -145,8 +153,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const eventRes = await fetch("/api/spotify/upcoming-events", { credentials: "include" });
     const eventData = await eventRes.json();
 
-    const eventList = document.getElementById("upcoming-events");
+    // Add events to both home page and events page
+    const upcomingEventsList = document.getElementById("upcoming-events");
+    const eventsListSection = document.getElementById("events-list");
+    
     if (eventData) {
+      // Add to upcoming events on home page
       eventData.forEach(event => {
         const eventItem = document.createElement("div");
         eventItem.classList.add("event-card");
@@ -156,7 +168,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           <p>Date: ${event.date}</p>
           <p>Location: ${event.location}</p>
         `;
-        eventList.appendChild(eventItem);
+        upcomingEventsList.appendChild(eventItem);
+        
+        // Add to events page with horizontal layout
+        const eventItemHorizontal = document.createElement("div");
+        eventItemHorizontal.classList.add("event-card");
+        eventItemHorizontal.innerHTML = `
+          <img src="${event.image}" alt="${event.name}">
+          <div class="event-details">
+            <h4>${event.name}</h4>
+            <p>Date: ${event.date}</p>
+            <p>Location: ${event.location}</p>
+            <button>Book Now</button>
+          </div>
+        `;
+        eventsListSection.appendChild(eventItemHorizontal);
       });
     }
 

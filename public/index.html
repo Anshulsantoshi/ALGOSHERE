@@ -1,107 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ticketify - Concert Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticketify - Concert Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-  <!-- Sidebar Toggle Button -->
-  <button id="sidebar-toggle" class="sidebar-toggle">
-    <i class="fas fa-bars"></i>
-  </button>
-
-  <div class="dashboard">
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-      <!-- Sidebar Close Button -->
-      <button id="sidebar-close" class="sidebar-close">
-        <i class="fas fa-times"></i>
-      </button>
-
-      <div class="logo">Ticketify</div>
-      <ul>
-        <li><a href="#" id="home-link"><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="#" id="events-link"><i class="fas fa-calendar-alt"></i> Events</a></li>
-        <li><a href="#" id="tickets-link"><i class="fas fa-ticket-alt"></i> My Tickets</a></li>
-        <li><a href="#" id="profile-link"><i class="fas fa-user"></i> Profile</a></li>
-        <li><a href="#" id="support-link"><i class="fas fa-headset"></i> Support</a></li>
-      </ul>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Home Section (Default) -->
-      <div id="home-section" class="content-section active">
-        <!-- User Profile Section -->
-        <div class="user-profile">
-          <img id="user-avatar" src="" alt="User Avatar" class="avatar">
-          <h2 id="username">Welcome, User!</h2>
-          <p id="user-email">Gold Member</p>
-        </div>
-
-        <!-- Top Artists Section -->
-        <div class="top-events">
-          <h3>Top Artists</h3>
-          <div id="top-artists" class="event-list"></div>
-        </div>
-
-        <!-- Top Tracks Section -->
-        <div class="top-events">
-          <h3>Top Tracks</h3>
-          <div id="top-tracks" class="event-list"></div>
-        </div>
-
-        <!-- Upcoming Events Section -->
-        <div class="top-events">
-          <h3>Upcoming Events</h3>
-          <div id="upcoming-events" class="event-list"></div>
-        </div>
-      </div>
-
-      <!-- Events Section -->
-      <div id="events-section" class="content-section">
-        <h2>Upcoming Events</h2>
-        <div id="events-list" class="event-list"></div>
-      </div>
-
-      <!-- My Tickets Section -->
-      <div id="tickets-section" class="content-section">
-        <h2>My Tickets</h2>
-        <div class="ticket-list">
-          <div class="ticket">
-            <div id="qrcode"></div>
-            <p>Concert Name 1 - 25th Oct 2023</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Profile Section -->
-      <div id="profile-section" class="content-section">
-        <h2>Profile</h2>
-        <div class="profile-details">
-          <img id="profile-avatar" src="" alt="User Avatar" class="avatar">
-          <h3 id="profile-name">John Doe</h3>
-          <p id="profile-email">john.doe@example.com</p>
-          <p>Member Since: 2022</p>
-        </div>
-      </div>
-
-      <!-- Support Section -->
-      <div id="support-section" class="content-section">
-        <h2>Support</h2>
-        <p>Having trouble? Contact us:</p>
-        <ul>
-          <li>Email: support@ticketify.com</li>
-          <li>Phone: +91 1234567890</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-  <script src="script.js"></script>
+<!-- Sidebar Toggle Button -->
+<button id="sidebar-toggle" class="sidebar-toggle">
+<i class="fas fa-bars"></i>
+</button>
+<div class="dashboard">
+<!-- Sidebar Navigation -->
+<div class="sidebar">
+<!-- Sidebar Close Button -->
+<button id="sidebar-close" class="sidebar-close">
+<i class="fas fa-times"></i>
+</button>
+<div class="logo">Ticketify</div>
+<ul>
+<li><a href="#" id="home-link"><i class="fas fa-home"></i> Home</a></li>
+<li><a href="#" id="events-link"><i class="fas fa-calendar-alt"></i> Events</a></li>
+<li><a href="#" id="artists-link"><i class="fas fa-music"></i> Top Artists</a></li>
+<li><a href="#" id="tracks-link"><i class="fas fa-compact-disc"></i> Top Tracks</a></li>
+<li><a href="#" id="tickets-link"><i class="fas fa-ticket-alt"></i> My Tickets</a></li>
+<li><a href="#" id="profile-link"><i class="fas fa-user"></i> Profile</a></li>
+<li><a href="#" id="support-link"><i class="fas fa-headset"></i> Support</a></li>
+</ul>
+</div>
+<!-- Main Content -->
+<div class="main-content">
+<!-- Home Section (Default) -->
+<div id="home-section" class="content-section active">
+<!-- User Profile Section -->
+<div class="user-profile">
+<img id="user-avatar" src="" alt="User Avatar" class="avatar">
+<h2 id="username">Welcome, User!</h2>
+<p id="user-email">Gold Member</p>
+</div>
+<!-- Upcoming Events Section -->
+<div class="top-events">
+<h3>Upcoming Events</h3>
+<div id="upcoming-events" class="event-list"></div>
+</div>
+</div>
+<!-- Events Section -->
+<div id="events-section" class="content-section">
+<h2>Upcoming Events</h2>
+<div id="events-list" class="event-list horizontal-list"></div>
+</div>
+<!-- Top Artists Section -->
+<div id="artists-section" class="content-section">
+<h2>Top Artists</h2>
+<div id="top-artists" class="event-list"></div>
+</div>
+<!-- Top Tracks Section -->
+<div id="tracks-section" class="content-section">
+<h2>Top Tracks</h2>
+<div id="top-tracks" class="event-list"></div>
+</div>
+<!-- My Tickets Section -->
+<div id="tickets-section" class="content-section">
+<h2>My Tickets</h2>
+<div class="ticket-list">
+<div class="ticket">
+<div id="qrcode"></div>
+<p>Concert Name 1 - 25th Oct 2023</p>
+</div>
+</div>
+</div>
+<!-- Profile Section -->
+<div id="profile-section" class="content-section">
+<h2>Profile</h2>
+<div class="profile-details">
+<img id="profile-avatar" src="" alt="User Avatar" class="avatar">
+<h3 id="profile-name">John Doe</h3>
+<p id="profile-email">john.doe@example.com</p>
+<p>Member Since: 2022</p>
+</div>
+</div>
+<!-- Support Section -->
+<div id="support-section" class="content-section">
+<h2>Support</h2>
+<p>Having trouble? Contact us:</p>
+<ul>
+<li>Email: support@ticketify.com</li>
+<li>Phone: +91 1234567890</li>
+</ul>
+</div>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
