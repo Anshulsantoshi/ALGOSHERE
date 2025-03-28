@@ -38,12 +38,31 @@ passport.use(
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
       callbackURL: "http://localhost:5000/auth/spotify/callback",
     },
-    (accessToken, refreshToken, expires_in, profile, done) => {
-      console.log("Authenticated User:", profile.displayName); // Debugging
-      return done(null, { profile, accessToken });
+    async (accessToken, refreshToken, expires_in, profile, done) => {
+      try {
+        let user = await User.findOne({ spotify_id: profile.id });
+
+        if (!user) {
+          user = new User({
+            spotify_id: profile.id,
+            display_name: profile.displayName || "Unknown",
+            email: profile.emails?.[0]?.value || "N/A",
+            top_artists: [],
+            top_tracks: [],
+          });
+
+          await user.save();
+        }
+
+        return done(null, { profile, accessToken });
+      } catch (error) {
+        console.error("Database Error:", error);
+        return done(error);
+      }
     }
   )
 );
+
 
 // Serialize & Deserialize User
 passport.serializeUser((user, done) => {
@@ -94,11 +113,20 @@ app.get("/api/spotify/top-artists", async (req, res) => {
     const response = await axios.get("https://api.spotify.com/v1/me/top/artists", {
       headers: { Authorization: `Bearer ${req.user.accessToken}` },
     });
+
+    // Database me update karna
+    await User.findOneAndUpdate(
+      { spotify_id: req.user.profile.id },
+      { top_artists: response.data.items },
+      { new: true }
+    );
+
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch top artists" });
   }
 });
+
 
 // Fetch Top Tracks
 app.get("/api/spotify/top-tracks", async (req, res) => {
@@ -110,11 +138,20 @@ app.get("/api/spotify/top-tracks", async (req, res) => {
     const response = await axios.get("https://api.spotify.com/v1/me/top/tracks", {
       headers: { Authorization: `Bearer ${req.user.accessToken}` },
     });
+
+    // Database me update karna
+    await User.findOneAndUpdate(
+      { spotify_id: req.user.profile.id },
+      { top_tracks: response.data.items },
+      { new: true }
+    );
+
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch top tracks" });
   }
 });
+
 
 // Fetch Upcoming Events (Example: Using a mock API)
 app.get("/api/spotify/upcoming-events", async (req, res) => {
@@ -164,14 +201,28 @@ mongoose.connect('mongodb://localhost:27017/ticket_platform', {
 const userSchema = new mongoose.Schema({
   spotify_id: { type: String, required: true, unique: true },
   display_name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, default: "N/A" }, // Unique hata diya
   top_artists: { type: Array, default: [] },
   top_tracks: { type: Array, default: [] },
   fan_score: { type: Number, default: 0 },
   created_at: { type: Date, default: Date.now },
 });
 
+
 const User = mongoose.model('User', userSchema);
+
+
+// Route to fetch all events
+app.get('/api/events', async (req, res) => {
+  try {
+    const events = await Event.find({});
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching events', error: err });
+  }
+});
+
+
 
 
 
