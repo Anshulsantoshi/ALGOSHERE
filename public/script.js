@@ -40,7 +40,7 @@ function showSection(sectionId) {
 
   // Show the selected section
   document.getElementById(sectionId).classList.add('active');
-}
+} 
 
 // Sidebar Links Event Listeners
 document.getElementById('home-link').addEventListener('click', () => {
