@@ -1,17 +1,14 @@
 // QR Code Generator
-const qrCode = new QRCode(document.getElementById('qrcode'), {
-  text: 'https://example.com/ticket/123',
-  width: 128,
-  height: 128
-});
-
-// Book Now Button Functionality
-const bookButtons = document.querySelectorAll('.event-card button');
-bookButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    alert('Ticket booked successfully!');
-  });
-});
+function generateQR(text) {
+  if (document.getElementById('qrcode')) {
+    document.getElementById('qrcode').innerHTML = '';
+    new QRCode(document.getElementById('qrcode'), {
+      text: text,
+      width: 128,
+      height: 128
+    });
+  }
+}
 
 // Sidebar Toggle Functionality
 const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -20,7 +17,7 @@ const mainContent = document.querySelector('.main-content');
 
 sidebarToggle.addEventListener('click', () => {
   sidebar.classList.toggle('open');
-  mainContent.classList.toggle('sidebar-open'); // Add this line
+  mainContent.classList.toggle('sidebar-open');
 });
 
 // Sidebar Close Button Functionality
@@ -28,7 +25,7 @@ const sidebarClose = document.getElementById('sidebar-close');
 
 sidebarClose.addEventListener('click', () => {
   sidebar.classList.remove('open');
-  mainContent.classList.remove('sidebar-open'); // Add this line
+  mainContent.classList.remove('sidebar-open');
 });
 
 // Function to switch between sections
@@ -40,36 +37,285 @@ function showSection(sectionId) {
 
   // Show the selected section
   document.getElementById(sectionId).classList.add('active');
-} 
+}
 
 // Sidebar Links Event Listeners
-document.getElementById('home-link').addEventListener('click', () => {
+document.getElementById('home-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('home-section');
 });
 
-document.getElementById('events-link').addEventListener('click', () => {
+document.getElementById('events-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('events-section');
 });
 
-document.getElementById('artists-link').addEventListener('click', () => {
+document.getElementById('artists-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('artists-section');
 });
 
-document.getElementById('tracks-link').addEventListener('click', () => {
+document.getElementById('tracks-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('tracks-section');
 });
 
-document.getElementById('tickets-link').addEventListener('click', () => {
+document.getElementById('tickets-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('tickets-section');
 });
 
-document.getElementById('profile-link').addEventListener('click', () => {
+document.getElementById('profile-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('profile-section');
 });
 
-document.getElementById('support-link').addEventListener('click', () => {
+document.getElementById('support-link').addEventListener('click', (e) => {
+  e.preventDefault();
   showSection('support-section');
 });
+
+// Format date nicely
+function formatDate(dateString) {
+  const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+// Modal functionality
+const modal = document.getElementById('booking-modal');
+const closeModal = document.querySelector('.close-modal');
+
+if (closeModal) {
+  closeModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+  if (e.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
+// Book Now Button Event Handler
+function setupBookButtons() {
+  const bookButtons = document.querySelectorAll('.event-card button[data-event-id]');
+  bookButtons.forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const eventId = e.target.getAttribute('data-event-id');
+      
+      try {
+        // Fetch event details
+        const response = await fetch(`/api/events/${eventId}`);
+        if (!response.ok) throw new Error('Failed to fetch event details');
+        
+        const event = await response.json();
+        
+        // Populate modal with event details
+        document.getElementById('booking-event-name').textContent = event.eventName;
+        document.getElementById('booking-event-artist').textContent = `Artist: ${event.artistName}`;
+        document.getElementById('booking-event-date').textContent = `Date: ${formatDate(event.date)}`;
+        document.getElementById('booking-event-venue').textContent = `Venue: ${event.venue}`;
+        document.getElementById('booking-event-price').textContent = `Price: ₹${event.ticketPrice} per ticket`;
+        document.getElementById('booking-tickets-available').textContent = 
+          `Available: ${event.availableTickets} out of ${event.totalTickets}`;
+        
+        // Set event ID in hidden field
+        document.getElementById('booking-event-id').value = event.eventId;
+        
+        // Calculate initial total
+        const quantity = document.getElementById('ticket-quantity').value;
+        document.getElementById('ticket-total').textContent = (quantity * event.ticketPrice).toFixed(2);
+        
+        // Show modal
+        modal.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error getting event details:', error);
+        alert('Could not load event details. Please try again later.');
+      }
+    });
+  });
+  
+  // Handle quantity change - update total price
+  const quantityInput = document.getElementById('ticket-quantity');
+  if (quantityInput) {
+    quantityInput.addEventListener('change', async () => {
+      const eventId = document.getElementById('booking-event-id').value;
+      try {
+        const response = await fetch(`/api/events/${eventId}`);
+        if (!response.ok) throw new Error('Failed to fetch event details');
+        
+        const event = await response.json();
+        const quantity = quantityInput.value;
+        
+        document.getElementById('ticket-total').textContent = (quantity * event.ticketPrice).toFixed(2);
+      } catch (error) {
+        console.error('Error updating price:', error);
+      }
+    });
+  }
+  
+  // Handle booking form submission
+  const bookingForm = document.getElementById('booking-form');
+  if (bookingForm) {
+    bookingForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const eventId = document.getElementById('booking-event-id').value;
+      const tickets = parseInt(document.getElementById('ticket-quantity').value);
+      
+      try {
+        const response = await fetch('/api/book-ticket', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ eventId, tickets })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to book tickets');
+        }
+        
+        alert('Tickets booked successfully!');
+        modal.style.display = 'none';
+        
+        // Refresh events display
+        fetchEvents();
+        
+      } catch (error) {
+        console.error('Error booking tickets:', error);
+        alert(`Booking failed: ${error.message}`);
+      }
+    });
+  }
+}
+
+// Fetch and Display Events from the database
+async function fetchEvents() {
+  try {
+    const eventsContainer = document.getElementById('events-list');
+    const upcomingEventsContainer = document.getElementById('upcoming-events');
+    
+    // Show loading state
+    if (eventsContainer) {
+      eventsContainer.innerHTML = '<div class="loading">Loading events...</div>';
+    }
+    if (upcomingEventsContainer) {
+      upcomingEventsContainer.innerHTML = '<div class="loading">Loading events...</div>';
+    }
+    
+    const response = await fetch('/api/events');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const events = await response.json();
+    
+    // Clear loading state
+    if (eventsContainer) {
+      eventsContainer.innerHTML = '';
+    }
+    if (upcomingEventsContainer) {
+      upcomingEventsContainer.innerHTML = '';
+    }
+    
+    if (events.length === 0) {
+      if (eventsContainer) {
+        eventsContainer.innerHTML = '<div class="empty-state">No events found</div>';
+      }
+      if (upcomingEventsContainer) {
+        upcomingEventsContainer.innerHTML = '<div class="empty-state">No upcoming events</div>';
+      }
+      return;
+    }
+    
+    // Process events for both containers
+    events.forEach((event, index) => {
+      // Create event card for the events section (horizontal layout)
+      if (eventsContainer) {
+        const eventCard = createEventCard(event, true);
+        eventsContainer.appendChild(eventCard);
+      }
+      
+      // Only add the first 4 events to the upcoming events on home page
+      if (upcomingEventsContainer && index < 4) {
+        const upcomingEventCard = createEventCard(event, false);
+        upcomingEventsContainer.appendChild(upcomingEventCard);
+      }
+    });
+    
+    // Setup book buttons after adding events to the DOM
+    setupBookButtons();
+    
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    if (document.getElementById('events-list')) {
+      document.getElementById('events-list').innerHTML = 
+        '<div class="empty-state">Failed to load events. Please try again later.</div>';
+    }
+    if (document.getElementById('upcoming-events')) {
+      document.getElementById('upcoming-events').innerHTML = 
+        '<div class="empty-state">Failed to load events. Please try again later.</div>';
+    }
+  }
+}
+
+// Helper function to create event cards
+function createEventCard(event, isHorizontal) {
+  const eventCard = document.createElement('div');
+  eventCard.classList.add('event-card');
+  
+  // Use a default image if none is provided
+  const imageUrl = event.imageUrl || '/images/concert-placeholder.jpg';
+  
+  if (isHorizontal) {
+    // Horizontal layout for events page
+    eventCard.innerHTML = `
+      <img src="${imageUrl}" alt="${event.eventName}">
+      <div class="event-details">
+        <h4>${event.eventName}</h4>
+        <p><strong>Artist:</strong> ${event.artistName}</p>
+        <p><strong>Date:</strong> ${formatDate(event.date)}</p>
+        <p><strong>Venue:</strong> ${event.venue}</p>
+        <p><strong>Price:</strong> ₹${event.ticketPrice}</p>
+        <p><strong>Available Tickets:</strong> ${event.availableTickets}/${event.totalTickets}</p>
+        <button data-event-id="${event.eventId}">Book Now</button>
+      </div>
+    `;
+  } else {
+    // Vertical layout for homepage
+    eventCard.innerHTML = `
+      <img src="${imageUrl}" alt="${event.eventName}">
+      <h4>${event.eventName}</h4>
+      <p>${event.artistName}</p>
+      <p>${formatDate(event.date)}</p>
+      <p>${event.venue}</p>
+      <button data-event-id="${event.eventId}">Book Now</button>
+    `;
+  }
+  
+  return eventCard;
+}
+
+// Support Form Handler
+const supportForm = document.getElementById('support-form');
+if (supportForm) {
+  supportForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const subject = document.getElementById('subject').value;
+    const message = document.getElementById('message').value;
+    
+    // This would typically make an API call to submit the support request
+    alert(`Support request submitted!\nSubject: ${subject}\nWe'll get back to you soon.`);
+    supportForm.reset();
+  });
+}
 
 // Fetch User Data and Spotify Data
 document.addEventListener("DOMContentLoaded", async () => {
@@ -79,111 +325,113 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userData = await userRes.json();
 
     if (!userData.user) {
-      window.location.href = "/"; // Redirect to home if no user data
+      console.log("No user data found, redirecting to login");
+      window.location.href = "/";
       return;
     }
 
     // Update User Profile Section
     const { profile } = userData.user;
     document.getElementById("username").innerText = `Welcome, ${profile.displayName || "User"}`;
-    document.getElementById("user-email").innerText = profile.emails?.[0] || "Gold Member";
-    document.getElementById("user-avatar").src = profile.photos?.[0] || "images/52eabf633ca6414e60a7677b0b917d92-male-avatar-maker.webp";
-
-    // Fetch Top Artists
-    const artistRes = await fetch("/api/spotify/top-artists", { credentials: "include" });
-    const artistData = await artistRes.json();
-
-    const artistList = document.getElementById("top-artists");
-    if (artistData.items) {
-      artistData.items.forEach(artist => {
-        const artistItem = document.createElement("div");
-        artistItem.classList.add("event-card");
-        artistItem.innerHTML = `
-          <img src="${artist.images[0]?.url}" alt="${artist.name}">
-          <h4>${artist.name}</h4>
-          <p>Popularity: ${artist.popularity}</p>
-        `;
-        artistList.appendChild(artistItem);
-      });
+    document.getElementById("user-email").innerText = profile.emails?.[0]?.value || "Gold Member";
+    
+    // Also update profile section
+    document.getElementById("profile-name").innerText = profile.displayName || "User";
+    document.getElementById("profile-email").innerText = profile.emails?.[0]?.value || "Not available";
+    
+    // Set avatar with a fallback
+    const avatarUrl = profile.photos?.[0]?.value || "/images/avatar-placeholder.jpg";
+    
+    const avatarElement = document.getElementById("user-avatar");
+    if (avatarElement) {
+      avatarElement.src = avatarUrl;
+      avatarElement.onerror = function() {
+        this.src = "/images/avatar-placeholder.jpg";
+      };
     }
     
-    const saveUserData = async (spotify_id, email, top_artists, top_tracks) => {
-      try {
-          const response = await fetch('http://localhost:5000/save-user-data', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ spotify_id, email, top_artists, top_tracks }),
+    const profileAvatarElement = document.getElementById("profile-avatar");
+    if (profileAvatarElement) {
+      profileAvatarElement.src = avatarUrl;
+      profileAvatarElement.onerror = function() {
+        this.src = "/images/avatar-placeholder.jpg";
+      };
+    }
+
+    // Fetch Events
+    await fetchEvents();
+    
+    try {
+      // Fetch Top Artists
+      const artistRes = await fetch("/api/spotify/top-artists", { credentials: "include" });
+      const artistData = await artistRes.json();
+
+      const artistList = document.getElementById("top-artists");
+      if (artistList) {
+        if (artistData.items && artistData.items.length > 0) {
+          artistData.items.forEach(artist => {
+            const artistItem = document.createElement("div");
+            artistItem.classList.add("event-card");
+            artistItem.innerHTML = `
+              <img src="${artist.images[0]?.url || '/images/artist-placeholder.jpg'}" alt="${artist.name}">
+              <h4>${artist.name}</h4>
+              <p>Popularity: ${artist.popularity}</p>
+            `;
+            artistList.appendChild(artistItem);
           });
-  
-          const data = await response.json();
-          console.log('User data saved:', data);
-      } catch (err) {
-          console.error('Error saving user data:', err);
+        } else {
+          artistList.innerHTML = '<div class="empty-state">No top artists found</div>';
+        }
       }
-    };
-  
-    // Call this function after fetching user data from Spotify
-    const spotify_id = 'user_spotify_id'; // Replace with actual Spotify ID
-    const email = 'user_email'; // Replace with actual email
-    const top_artists = [/* Array of top artists */];
-    const top_tracks = [/* Array of top tracks */];
-  
-    saveUserData(spotify_id, email, top_artists, top_tracks);
+    } catch (artistError) {
+      console.error("Error fetching top artists:", artistError);
+      if (document.getElementById("top-artists")) {
+        document.getElementById("top-artists").innerHTML = 
+          '<div class="empty-state">Could not load artist data</div>';
+      }
+    }
     
-  
-    // Fetch Top Tracks
-    const trackRes = await fetch("/api/spotify/top-tracks", { credentials: "include" });
-    const trackData = await trackRes.json();
+    try {
+      // Fetch Top Tracks
+      const trackRes = await fetch("/api/spotify/top-tracks", { credentials: "include" });
+      const trackData = await trackRes.json();
 
-    const trackList = document.getElementById("top-tracks");
-    if (trackData.items) {
-      trackData.items.forEach(track => {
-        const trackItem = document.createElement("div");
-        trackItem.classList.add("event-card");
-        trackItem.innerHTML = `
-          <img src="${track.album.images[0]?.url}" alt="${track.name}">
-          <h4>${track.name}</h4>
-          <p>Artist: ${track.artists[0]?.name}</p>
-        `;
-        trackList.appendChild(trackItem);
-      });
+      const trackList = document.getElementById("top-tracks");
+      if (trackList) {
+        if (trackData.items && trackData.items.length > 0) {
+          trackData.items.forEach(track => {
+            const trackItem = document.createElement("div");
+            trackItem.classList.add("event-card");
+            trackItem.innerHTML = `
+              <img src="${track.album.images[0]?.url || '/images/track-placeholder.jpg'}" alt="${track.name}">
+              <h4>${track.name}</h4>
+              <p>Artist: ${track.artists[0]?.name}</p>
+            `;
+            trackList.appendChild(trackItem);
+          });
+        } else {
+          trackList.innerHTML = '<div class="empty-state">No top tracks found</div>';
+        }
+      }
+    } catch (trackError) {
+      console.error("Error fetching top tracks:", trackError);
+      if (document.getElementById("top-tracks")) {
+        document.getElementById("top-tracks").innerHTML = 
+          '<div class="empty-state">Could not load track data</div>';
+      }
     }
 
-    // Fetch Upcoming Events
-    const eventRes = await fetch("/api/spotify/upcoming-events", { credentials: "include" });
-    const eventData = await eventRes.json();
-
-    // Add events to both home page and events page
-    const upcomingEventsList = document.getElementById("upcoming-events");
-    const eventsListSection = document.getElementById("events-list");
-    
-    if (eventData) {
-      // Add to upcoming events on home page
-      eventData.forEach(event => {
-        const eventItem = document.createElement("div");
-        eventItem.classList.add("event-card");
-        eventItem.innerHTML = `
-          <img src="${event.image}" alt="${event.name}">
-          <h4>${event.name}</h4>
-          <p>Date: ${event.date}</p>
-          <p>Location: ${event.location}</p>
-        `;
-        upcomingEventsList.appendChild(eventItem);
-        
-        // Add to events page with horizontal layout
-        const eventItemHorizontal = document.createElement("div");
-        eventItemHorizontal.classList.add("event-card");
-        eventItemHorizontal.innerHTML = `
-          <img src="${event.image}" alt="${event.name}">
-          <div class="event-details">
-            <h4>${event.name}</h4>
-            <p>Date: ${event.date}</p>
-            <p>Location: ${event.location}</p>
-            <button>Book Now</button>
-          </div>
-        `;
-        eventsListSection.appendChild(eventItemHorizontal);
-      });
+    // Try to calculate fan score
+    try {
+      const fanScoreElement = document.getElementById('fan-score');
+      if (fanScoreElement) {
+        // This would typically come from your user profile or be calculated
+        // For now we'll just set a placeholder value
+        const randomScore = Math.floor(Math.random() * 50) + 50; // Random score between 50-100
+        fanScoreElement.textContent = randomScore;
+      }
+    } catch (err) {
+      console.error("Error setting fan score:", err);
     }
 
   } catch (err) {
