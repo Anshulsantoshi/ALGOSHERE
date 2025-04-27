@@ -1,11 +1,21 @@
+require("dotenv").config();
 const mongoose = require('mongoose');
+const connectDB = require('./db');
+
+// Connect to MongoDB
+connectDB();
+
+// Import Event model
 const Event = require('./models/Event');
 
-// Connect to MongoDB (use your existing db.js logic)
-mongoose.connect('mongodb://localhost:27017/ticketPlatform', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+// Event image URLs (placeholder URLs - replace with actual image URLs)
+const eventImages = [
+  '/images/concert1.jpg',
+  '/images/concert2.jpg',
+  '/images/concert3.jpg',
+  '/images/concert4.jpg',
+  '/images/concert5.jpg'
+];
 
 // Fake events data
 const fakeEvents = [
@@ -18,294 +28,101 @@ const fakeEvents = [
     ticketPrice: 1500,
     totalTickets: 1000,
     availableTickets: 1000,
+    imageUrl: eventImages[0] || '/images/concert-placeholder.jpg'
   },
   {
     eventId: 'event2',
     artistName: 'Neha Kakkar',
-    eventName: 'Neha Kakkar Live',
-    date: new Date('2023-12-20T18:30:00'),
+    eventName: 'Neha Kakkar World Tour',
+    date: new Date('2023-12-22T20:00:00'),
     venue: 'Mumbai Arena',
     ticketPrice: 2000,
     totalTickets: 800,
-    availableTickets: 800,
+    availableTickets: 650,
+    imageUrl: eventImages[1] || '/images/concert-placeholder.jpg'
   },
   {
     eventId: 'event3',
     artistName: 'Badshah',
-    eventName: 'Badshah Night',
-    date: new Date('2023-12-25T20:00:00'),
-    venue: 'Bangalore Palace',
-    ticketPrice: 2500,
+    eventName: 'Badshah Rap Night',
+    date: new Date('2023-12-30T21:00:00'),
+    venue: 'Bengaluru Stadium',
+    ticketPrice: 1800,
     totalTickets: 1200,
-    availableTickets: 1200,
+    availableTickets: 900,
+    imageUrl: eventImages[2] || '/images/concert-placeholder.jpg'
   },
   {
-    eventId: 'event11',
-    artistName: 'KK',
-    eventName: 'KK Tribute Night',
-    date: new Date('2024-07-05T19:30:00'),
-    venue: 'Indore Arena',
-    ticketPrice: 1300,
-    totalTickets: 900,
-    availableTickets: 900
-},
-{
-    eventId: 'event12',
-    artistName: 'Amit Trivedi',
-    eventName: 'Amit Trivedi Musical Journey',
-    date: new Date('2024-08-15T20:00:00'),
-    venue: 'Goa Beach Festival',
-    ticketPrice: 2100,
-    totalTickets: 850,
-    availableTickets: 850
-},
-{
-    eventId: 'event13',
-    artistName: 'Pritam',
-    eventName: 'Pritam Live Orchestra',
-    date: new Date('2024-09-10T19:00:00'),
-    venue: 'Nagpur Music Fest',
-    ticketPrice: 1800,
-    totalTickets: 950,
-    availableTickets: 950
-},
-{
-    eventId: 'event14',
-    artistName: 'Rahat Fateh Ali Khan',
-    eventName: 'Sufi Night with Rahat',
-    date: new Date('2024-10-05T20:30:00'),
-    venue: 'Varanasi Ghat Concert',
-    ticketPrice: 3000,
-    totalTickets: 1000,
-    availableTickets: 1000
-},
-{
-    eventId: 'event15',
-    artistName: 'Rekha Bhardwaj',
-    eventName: 'Rekha Bhardwaj Gazal Night',
-    date: new Date('2024-11-20T19:45:00'),
-    venue: 'Bhopal Auditorium',
-    ticketPrice: 2500,
-    totalTickets: 700,
-    availableTickets: 700
-},
-{
-    eventId: 'event16',
-    artistName: 'Mika Singh',
-    eventName: 'Mika Singh Dhamaka',
-    date: new Date('2024-12-25T21:00:00'),
-    venue: 'Noida Rock Fest',
-    ticketPrice: 2000,
-    totalTickets: 1100,
-    availableTickets: 1100
-},
-{
-    eventId: 'event17',
-    artistName: 'Vishal-Shekhar',
-    eventName: 'Vishal-Shekhar Live',
-    date: new Date('2025-01-15T20:00:00'),
-    venue: 'Gurgaon Music Dome',
-    ticketPrice: 2400,
-    totalTickets: 900,
-    availableTickets: 900
-},
-{
-    eventId: 'event18',
-    artistName: 'Shankar Mahadevan',
-    eventName: 'Shankar Mahadevan Fusion Night',
-    date: new Date('2025-02-10T19:30:00'),
-    venue: 'Coimbatore Cultural Fest',
-    ticketPrice: 2200,
-    totalTickets: 800,
-    availableTickets: 800
-},
-{
-    eventId: 'event19',
-    artistName: 'Ankit Tiwari',
-    eventName: 'Ankit Tiwari Melody Night',
-    date: new Date('2025-03-25T19:00:00'),
-    venue: 'Surat Grand Hall',
-    ticketPrice: 1700,
-    totalTickets: 950,
-    availableTickets: 950
-},
-{
-    eventId: 'event20',
-    artistName: 'A.R. Rahman',
-    eventName: 'A.R. Rahman Live in Concert',
-    date: new Date('2025-04-20T20:00:00'),
-    venue: 'Chennai Stadium',
-    ticketPrice: 5000,
-    totalTickets: 1500,
-    availableTickets: 1500
-},
-{
-    eventId: 'event21',
-    artistName: 'Salim-Sulaiman',
-    eventName: 'Salim-Sulaiman Musical Extravaganza',
-    date: new Date('2025-05-05T19:30:00'),
-    venue: 'Ranchi Cultural Hall',
-    ticketPrice: 2300,
-    totalTickets: 750,
-    availableTickets: 750
-},
-{
-    eventId: 'event22',
-    artistName: 'Hariharan',
-    eventName: 'Hariharan Classical Evening',
-    date: new Date('2025-06-15T20:00:00'),
-    venue: 'Mysore Palace Grounds',
-    ticketPrice: 2800,
-    totalTickets: 600,
-    availableTickets: 600
-},
-{
-    eventId: 'event23',
-    artistName: 'Shilpa Rao',
-    eventName: 'Shilpa Rao Unplugged',
-    date: new Date('2025-07-10T19:00:00'),
-    venue: 'Patna Concert Hall',
-    ticketPrice: 1900,
-    totalTickets: 800,
-    availableTickets: 800
-},
-{
-    eventId: 'event24',
-    artistName: 'Mohit Chauhan',
-    eventName: 'Mohit Chauhan Indie Night',
-    date: new Date('2025-08-20T20:30:00'),
-    venue: 'Dehradun Music Festival',
-    ticketPrice: 2600,
-    totalTickets: 850,
-    availableTickets: 850
-},
-{
-    eventId: 'event25',
-    artistName: 'Kailash Kher',
-    eventName: 'Kailash Kher Sufi Vibes',
-    date: new Date('2025-09-05T19:30:00'),
-    venue: 'Shimla Open Grounds',
-    ticketPrice: 2700,
-    totalTickets: 700,
-    availableTickets: 700
-},
-
-{
-    eventId: 'event1',
-    artistName: 'Arijit Singh',
-    eventName: 'Arijit Live in Concert',
-    date: new Date('2023-12-15T19:00:00'),
-    venue: 'Delhi Stadium',
-    ticketPrice: 1500,
-    totalTickets: 1000,
-    availableTickets: 1000
-},
-{
-    eventId: 'event2',
-    artistName: 'Neha Kakkar',
-    eventName: 'Neha Kakkar Night',
-    date: new Date('2023-11-20T18:30:00'),
-    venue: 'Mumbai Arena',
-    ticketPrice: 1200,
-    totalTickets: 800,
-    availableTickets: 800
-},
-{
-    eventId: 'event3',
-    artistName: 'Diljit Dosanjh',
-    eventName: 'Diljit Live',
-    date: new Date('2023-10-10T20:00:00'),
-    venue: 'Chandigarh Stadium',
-    ticketPrice: 2000,
-    totalTickets: 1200,
-    availableTickets: 1200
-},
-{
     eventId: 'event4',
-    artistName: 'Badshah',
-    eventName: 'Badshah Rap Show',
-    date: new Date('2023-09-05T21:00:00'),
-    venue: 'Bangalore Open Air',
-    ticketPrice: 1800,
-    totalTickets: 900,
-    availableTickets: 900
-},
-{
+    artistName: 'A.R. Rahman',
+    eventName: 'Rahman Musical Night',
+    date: new Date('2024-01-05T19:30:00'),
+    venue: 'Chennai Auditorium',
+    ticketPrice: 2500,
+    totalTickets: 1500,
+    availableTickets: 1500,
+    imageUrl: eventImages[3] || '/images/concert-placeholder.jpg'
+  },
+  {
     eventId: 'event5',
     artistName: 'Shreya Ghoshal',
-    eventName: 'Shreya Ghoshal Symphony',
-    date: new Date('2024-01-10T19:30:00'),
-    venue: 'Hyderabad Auditorium',
-    ticketPrice: 2500,
-    totalTickets: 1100,
-    availableTickets: 1100
-},
-{
-    eventId: 'event6',
-    artistName: 'Sonu Nigam',
-    eventName: 'Sonu Nigam Melodies',
-    date: new Date('2024-02-15T20:00:00'),
-    venue: 'Kolkata Stadium',
+    eventName: 'Melody Queen Live',
+    date: new Date('2024-01-15T18:00:00'),
+    venue: 'Hyderabad Convention Center',
     ticketPrice: 1700,
-    totalTickets: 1000,
-    availableTickets: 1000
-},
-{
-    eventId: 'event7',
-    artistName: 'Jubin Nautiyal',
-    eventName: 'Jubin Nautiyal Live',
-    date: new Date('2024-03-05T19:00:00'),
-    venue: 'Pune Concert Hall',
-    ticketPrice: 1400,
-    totalTickets: 850,
-    availableTickets: 850
-},
-{
-    eventId: 'event8',
-    artistName: 'Guru Randhawa',
-    eventName: 'Guru Randhawa Night',
-    date: new Date('2024-04-10T20:30:00'),
-    venue: 'Ahmedabad Dome',
+    totalTickets: 900,
+    availableTickets: 750,
+    imageUrl: eventImages[4] || '/images/concert-placeholder.jpg'
+  },
+  {
+    eventId: 'event6',
+    artistName: 'Divine',
+    eventName: 'Gully Gang Tour',
+    date: new Date('2024-01-28T20:30:00'),
+    venue: 'Pune Music Arena',
     ticketPrice: 1600,
-    totalTickets: 950,
-    availableTickets: 950
-},
-{
-    eventId: 'event9',
-    artistName: 'B Praak',
-    eventName: 'B Praak Unplugged',
-    date: new Date('2024-05-15T19:30:00'),
-    venue: 'Jaipur Music Hall',
-    ticketPrice: 1900,
-    totalTickets: 700,
-    availableTickets: 700
-},
-{
-    eventId: 'event10',
-    artistName: 'Honey Singh',
-    eventName: 'Yo Yo Honey Singh Show',
-    date: new Date('2024-06-20T21:00:00'),
-    venue: 'Lucknow Ground',
+    totalTickets: 800,
+    availableTickets: 800,
+    imageUrl: eventImages[0] || '/images/concert-placeholder.jpg'
+  },
+  {
+    eventId: 'event7',
+    artistName: 'Sonu Nigam',
+    eventName: 'Sonu Nigam Unplugged',
+    date: new Date('2024-02-10T19:00:00'),
+    venue: 'Kolkata Stadium',
     ticketPrice: 2200,
-    totalTickets: 1200,
-    availableTickets: 1200
-}
-
-  
-  
+    totalTickets: 1100,
+    availableTickets: 980,
+    imageUrl: eventImages[1] || '/images/concert-placeholder.jpg'
+  }
 ];
 
-// Function to seed events
-const seedEvents = async () => {
+// Function to seed database
+async function seedDatabase() {
   try {
-    await Event.deleteMany({}); // Clear existing events
-    await Event.insertMany(fakeEvents); // Insert new events
-    console.log('Events seeded successfully!');
-  } catch (err) {
-    console.error('Error seeding events:', err);
-  } finally {
+    // Clear existing events
+    await Event.deleteMany({});
+    console.log('Cleared existing events from database');
+    
+    // Insert new events
+    const result = await Event.insertMany(fakeEvents);
+    console.log(`Successfully seeded ${result.length} events to database`);
+    
+    // Display all events
+    const allEvents = await Event.find({});
+    console.log('All events in database:');
+    allEvents.forEach(event => {
+      console.log(`- ${event.eventName} by ${event.artistName} on ${event.formattedDate}`);
+    });
+    
+    mongoose.connection.close();
+    console.log('Database connection closed');
+  } catch (error) {
+    console.error('Error seeding database:', error);
     mongoose.connection.close();
   }
-};
+}
 
-seedEvents();
+// Run the seeding function
+seedDatabase();

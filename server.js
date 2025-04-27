@@ -8,13 +8,19 @@ const cors = require("cors");
 const path = require("path");
 const mongoose = require("mongoose");
 
+// Import database connection function
+const connectDB = require('./db');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Serve static files from the "public" folder
-app.use(express.static(path.join(__dirname, "public")));
+// Connect to MongoDB
+connectDB();
 
-// CORS Setup
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(cors({ origin: "http://localhost:5000", credentials: true }));
 
 // Session Setup
@@ -71,15 +77,15 @@ passport.use(
     },
     async (accessToken, refreshToken, expires_in, profile, done) => {
       try {
+        // Import User model directly here to avoid circular dependencies
+        const User = require('./models/User');
+        
         let user = await User.findOne({ spotify_id: profile.id });
 
         if (!user) {
           user = new User({
             spotify_id: profile.id,
-            display_name: profile.displayName || "Unknown",
-            email: profile.emails?.[0]?.value || `noemail-${profile.id}@spotify.com`,
-            top_artists: [],
-            top_tracks: [],
+            email: profile.emails?.[0]?.value || "N/A",
           });
 
           await user.save();
@@ -94,7 +100,7 @@ passport.use(
   )
 );
 
-// Serialize/Deserialize
+// Serialize & Deserialize User
 passport.serializeUser((user, done) => {
   done(null, user);
 });
@@ -134,88 +140,67 @@ app.get("/debug", (req, res) => {
   res.json({ user: req.user || "No user in session" });
 });
 
-// Top Artists
-app.get("/api/spotify/top-artists", async (req, res) => {
-  if (!req.user || !req.user.accessToken) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
+// Save user data endpoint
+app.post('/save-user-data', async (req, res) => {
   try {
-    const response = await axios.get("https://api.spotify.com/v1/me/top/artists", {
-      headers: { Authorization: `Bearer ${req.user.accessToken}` },
-    });
-
-    await User.findOneAndUpdate(
-      { spotify_id: req.user.profile.id },
-      { top_artists: response.data.items },
-      { new: true }
+    const { spotify_id, email, top_artists, top_tracks } = req.body;
+    
+    const User = require('./models/User');
+    const user = await User.findOneAndUpdate(
+      { spotify_id },
+      { 
+        email,
+        fan_score: calculateFanScore(top_artists, top_tracks) 
+      },
+      { new: true, upsert: true }
     );
-
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch top artists" });
+    
+    res.status(200).json({ success: true, user });
+  } catch (err) {
+    console.error('Error saving user data:', err);
+    res.status(500).json({ error: 'Failed to save user data' });
   }
 });
 
-// Top Tracks
-app.get("/api/spotify/top-tracks", async (req, res) => {
-  if (!req.user || !req.user.accessToken) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    const response = await axios.get("https://api.spotify.com/v1/me/top/tracks", {
-      headers: { Authorization: `Bearer ${req.user.accessToken}` },
+// Helper function to calculate fan score based on top artists and tracks
+function calculateFanScore(artists, tracks) {
+  // Simple algorithm: score based on popularity of artists and tracks
+  let score = 0;
+  
+  if (Array.isArray(artists)) {
+    artists.forEach((artist, index) => {
+      // Weight by position in list (earlier = more important)
+      score += (artist.popularity || 0) * (20 - index) / 10;
     });
-
-    await User.findOneAndUpdate(
-      { spotify_id: req.user.profile.id },
-      { top_tracks: response.data.items },
-      { new: true }
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch top tracks" });
   }
-});
-
-// Dummy Events
-app.get("/api/spotify/upcoming-events", async (req, res) => {
-  if (!req.user || !req.user.accessToken) {
-    return res.status(401).json({ error: "Unauthorized" });
+  
+  if (Array.isArray(tracks)) {
+    tracks.forEach((track, index) => {
+      // Weight by position in list
+      score += (track.popularity || 0) * (20 - index) / 20;
+    });
   }
+  
+  return Math.round(score);
+}
 
-  const mockEvents = [
-    {
-      name: "Concert 1",
-      date: "25th Oct 2023",
-      location: "Mumbai",
-      image: "https://example.com/concert1.jpg",
-    },
-    {
-      name: "Concert 2",
-      date: "30th Oct 2023",
-      location: "Delhi",
-      image: "https://example.com/concert2.jpg",
-    },
-  ];
+// API Routes
+app.use("/api/spotify", require("./route/spotify"));
+app.use("/api", require("./route/events"));
 
-  res.json(mockEvents);
-});
-
-// Dashboard
+// Serve Dashboard
 app.get("/dashboard", (req, res) => {
   if (req.isAuthenticated()) {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
   } else {
     res.redirect("/auth/spotify");
   }
 });
 
-// Events Route
-const eventRoutes = require("./route/events");
-app.use("/api", eventRoutes);
+// Home route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // Start Server
 app.listen(PORT, () => {

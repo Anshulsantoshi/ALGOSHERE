@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
-  eventId: { type: String, required: true, unique: true },
+  eventId: { type: String, required: true },
   artistName: { type: String, required: true },
   eventName: { type: String, required: true },
   date: { type: Date, required: true },
@@ -9,8 +9,17 @@ const eventSchema = new mongoose.Schema({
   ticketPrice: { type: Number, required: true },
   totalTickets: { type: Number, required: true },
   availableTickets: { type: Number, required: true },
+  imageUrl: { type: String, default: "/images/concert-placeholder.jpg" } // Default image
 });
 
-const Event = mongoose.model('Event', eventSchema);
+// Add virtual property for formatted date
+eventSchema.virtual('formattedDate').get(function() {
+  const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return this.date.toLocaleDateString('en-US', options);
+});
 
-module.exports = Event;
+// Ensure virtuals are included when converting to JSON
+eventSchema.set('toJSON', { virtuals: true });
+eventSchema.set('toObject', { virtuals: true });
+
+module.exports = mongoose.model('Event', eventSchema);
