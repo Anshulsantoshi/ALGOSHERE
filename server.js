@@ -29,14 +29,45 @@ app.use(
     secret: "your-secret-key",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }, // Set to `true` if using HTTPS
+    cookie: { secure: false },
   })
 );
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Spotify Passport Strategy
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/ticket_platform', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
+
+// Optional: Drop email index if error aa raha hai (run once)
+// mongoose.connection.once('open', async () => {
+//   try {
+//     await mongoose.connection.collection("users").dropIndex("email_1");
+//     console.log("✅ Dropped existing email_1 index");
+//   } catch (err) {
+//     console.log("ℹ️ Index may not exist:", err.message);
+//   }
+// });
+
+// User Schema and Model
+const userSchema = new mongoose.Schema({
+  spotify_id: { type: String, required: true, unique: true },
+  display_name: { type: String, required: true },
+  email: { type: String, default: "N/A" },
+  top_artists: { type: Array, default: [] },
+  top_tracks: { type: Array, default: [] },
+  fan_score: { type: Number, default: 0 },
+  created_at: { type: Date, default: Date.now },
+});
+
+const User = mongoose.model("User", userSchema);
+
+// Spotify Strategy
 passport.use(
   new SpotifyStrategy(
     {
@@ -73,7 +104,6 @@ passport.use(
 passport.serializeUser((user, done) => {
   done(null, user);
 });
-
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
@@ -81,7 +111,9 @@ passport.deserializeUser((obj, done) => {
 // Auth Routes
 app.get(
   "/auth/spotify",
-  passport.authenticate("spotify", { scope: ["user-top-read"] })
+  passport.authenticate("spotify", {
+    scope: ["user-top-read", "user-read-email"],
+  })
 );
 
 app.get(
@@ -92,7 +124,7 @@ app.get(
   })
 );
 
-// Logout Route
+// Logout
 app.get("/logout", (req, res) => {
   req.logout((err) => {
     if (err) return res.status(500).send("Logout Failed");
@@ -102,9 +134,9 @@ app.get("/logout", (req, res) => {
   });
 });
 
-// Debug Route (Check User in Session)
+// Debug route
 app.get("/debug", (req, res) => {
-  console.log("Session User:", req.user); // Debugging
+  console.log("Session User:", req.user);
   res.json({ user: req.user || "No user in session" });
 });
 
@@ -161,7 +193,7 @@ app.get("/dashboard", (req, res) => {
   if (req.isAuthenticated()) {
     res.sendFile(path.join(__dirname, "public", "dashboard.html"));
   } else {
-    res.redirect("/auth/spotify"); // Redirect to login if not authenticated
+    res.redirect("/auth/spotify");
   }
 });
 
@@ -172,5 +204,5 @@ app.get("/", (req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
